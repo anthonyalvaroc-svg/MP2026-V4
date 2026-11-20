@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Reportes Site</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1e293b" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #f1f5f9; color: #1e293b; padding-bottom: 80px; }
+    header { background: #1e293b; color: #fff; padding: 14px 16px; position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+    header h1 { font-size: 17px; font-weight: 600; }
+    .btn-back { background: #334155; color: #fff; border: none; padding: 7px 12px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .container { max-width: 720px; margin: 0 auto; padding: 14px; }
+    
+    /* Home Create Box */
+    .create-box { background: #fff; padding: 14px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px; display: flex; gap: 8px; }
+    .create-box input { flex: 1; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; }
+    .create-box input:focus { border-color: #2563eb; }
+    .btn-primary { background: #2563eb; color: #fff; border: none; padding: 11px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    
+    /* Project Card */
+    .project-card { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+    .project-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .project-title { font-size: 16px; font-weight: 700; color: #0f172a; word-break: break-word; cursor: pointer; flex: 1; }
+    .project-meta { font-size: 12px; color: #64748b; margin-bottom: 12px; }
+    .project-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .btn-open { background: #0f172a; color: #fff; border: none; padding: 10px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-zip { background: #475569; color: #fff; border: none; padding: 10px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-share { background: #16a34a; color: #fff; border: none; padding: 10px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .icon-btn { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 6px 9px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .icon-btn.danger { color: #dc2626; border-color: #fecaca; background: #fef2f2; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
+    .tab-btn { flex: 1; background: #e2e8f0; color: #334155; border: none; padding: 10px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; line-height: 1.25; }
+    .tab-btn.active { background: #1e293b; color: #fff; }
+
+    /* Subfolder Card */
+    .sub-card { background: #fff; border-radius: 10px; padding: 13px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+    .sub-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .sub-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 600; white-space: nowrap; }
+    .badge.empty { background: #f1f5f9; color: #64748b; }
+    .badge.filled { background: #dbeafe; color: #1d4ed8; }
+    .sub-desc { font-size: 12px; color: #475569; margin-bottom: 10px; line-height: 1.35; }
+    .sub-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-cam { background: #2563eb; color: #fff; border: none; padding: 10px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-up { background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; padding: 10px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    /* Thumbnails Grid inside Subfolder */
+    .thumb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .thumb-item { position: relative; border-radius: 7px; overflow: hidden; border: 1px solid #cbd5e1; background: #f8fafc; aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .thumb-item img, .thumb-item video { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+    .thumb-pdf { padding: 6px; text-align: center; font-size: 11px; color: #1e293b; word-break: break-all; cursor: pointer; }
+    .thumb-name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15,23,42,0.72); color: #fff; font-size: 9px; padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thumb-del { position: absolute; top: 4px; right: 4px; background: rgba(220, 38, 38, 0.92); color: #fff; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+
+    /* Camera Modal */
+    .cam-modal { position: fixed; inset: 0; background: #000; z-index: 100; display: none; flex-direction: column; }
+    .cam-modal.open { display: flex; }
+    .cam-top { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: #fff; background: rgba(0,0,0,0.6); z-index: 2; }
+    .cam-folder-label { font-size: 13px; font-weight: 600; max-width: 75%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cam-close { background: #334155; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .cam-view { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .cam-view video { width: 100%; height: 100%; object-fit: cover; }
+    /* Live transparent watermark preview bottom-right */
+    .cam-watermark-live {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      text-align: right;
+      color: #ffffff;
+      font-size: 12px;
+      line-height: 1.3;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.8);
+      pointer-events: none;
+      max-width: 85%;
+    }
+    .cam-bottom { padding: 16px; background: #0f172a; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .cam-preview-box { width: 58px; height: 58px; border-radius: 8px; border: 2px solid #475569; overflow: hidden; background: #1e293b; display: flex; align-items: center; justify-content: center; position: relative; }
+    .cam-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+    .cam-count-badge { position: absolute; top: -2px; right: -2px; background: #2563eb; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 5px; border-radius: 8px; }
+    .shutter-btn { width: 68px; height: 68px; border-radius: 50%; background: #fff; border: 5px solid #94a3b8; cursor: pointer; }
+    .shutter-btn:active { transform: scale(0.94); background: #e2e8f0; }
+    .cam-done-btn { background: #16a34a; color: #fff; border: none; padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+    /* Image Lightbox Modal */
+    .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 120; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 100%; max-height: 78vh; border-radius: 6px; }
+    .lightbox-bar { margin-top: 14px; display: flex; gap: 12px; align-items: center; }
+    .lightbox-name { color: #e2e8f0; font-size: 13px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Share / Processing Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 110; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 380px; text-align: center; }
+    .modal-box h3 { font-size: 17px; margin-bottom: 8px; color: #0f172a; }
+    .modal-box p { font-size: 13px; color: #475569; margin-bottom: 16px; line-height: 1.4; }
+    .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button id="btnBack" class="btn-back" style="display:none;" onclick="goHome()">← Carpetas</button>
+      <h1 id="headerTitle">Reportes Site</h1>
+    </div>
+  </header>
+
+  <!-- HOME VIEW -->
+  <div id="homeView" class="container">
+    <div class="create-box">
+      <input type="text" id="newProjectName" placeholder="Nombre del Site / Carpeta..." />
+      <button class="btn-primary" onclick="createProject()">+ Crear</button>
+    </div>
+    <div id="projectList"></div>
+  </div>
+
+  <!-- PROJECT DETAIL VIEW -->
+  <div id="projectView" class="container" style="display:none;">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab1" onclick="switchTab(1)">1. F17-CARPETA DE FOTOS</button>
+      <button class="tab-btn" id="tab2" onclick="switchTab(2)">2. FORMATOS MP</button>
+      <button class="tab-btn" id="tab3" onclick="switchTab(3)">3. MANTENIMIENTO PREVENTIVO</button>
+    </div>
+    <div id="subfolderList"></div>
+  </div>
+
+  <!-- NATIVE CAMERA MODAL -->
+  <div id="camModal" class="cam-modal">
+    <div class="cam-top">
+      <span class="cam-folder-label" id="camSubTitle">Subcarpeta</span>
+      <button class="cam-close" onclick="closeCamera()">Cerrar</button>
+    </div>
+    <div class="cam-view">
+      <video id="camVideo" autoplay playsinline></video>
+      <div class="cam-watermark-live" id="camLiveWatermark">Cargando datos...</div>
+    </div>
+    <div class="cam-bottom">
+      <div class="cam-preview-box" id="camPreviewBox" onclick="previewLastCaptured()">
+        <span style="color:#64748b;font-size:10px;">Sin foto</span>
+      </div>
+      <button class="shutter-btn" onclick="capturePhoto()" aria-label="Tomar foto"></button>
+      <button class="cam-done-btn" onclick="closeCamera()">Listo</button>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX PREVIEW MODAL -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox(event)">
+    <img id="lightboxImg" src="" alt="Vista previa" />
+    <div class="lightbox-bar">
+      <span class="lightbox-name" id="lightboxName"></span>
+      <button class="btn-back" onclick="document.getElementById('lightbox').classList.remove('open')">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- SHARE / ZIP MODAL -->
+  <div id="shareModal" class="modal-overlay">
+    <div class="modal-box">
+      <h3 id="shareModalTitle">Preparando archivo ZIP...</h3>
+      <p id="shareModalDesc">Empaquetando carpetas y evidencias...</p>
+      <div class="modal-actions" id="shareModalActions"></div>
+    </div>
+  </div>
+
+  <canvas id="workCanvas" style="display:none;"></canvas>
+  <script src="app.js"></script>
+</body>
+</html>
